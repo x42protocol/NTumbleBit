@@ -1,13 +1,11 @@
 ﻿using NBitcoin.DataEncoders;
-using NBitcoin.JsonConverters;
 using Newtonsoft.Json;
 using NTumbleBit.PuzzlePromise;
 using NTumbleBit.PuzzleSolver;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
+using Blockcore.Utilities.JsonConverters;
 
 namespace NTumbleBit.JsonConverters
 {

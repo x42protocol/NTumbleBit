@@ -18,7 +18,7 @@ namespace NTumbleBit
 			settings.Converters.Add(new SerializerBaseJsonConverter());
 			settings.Converters.Add(new StringEnumConverter());
 			settings.Converters.Add(new CorrelationIdJsonConverter());
-			NBitcoin.JsonConverters.Serializer.RegisterFrontConverters(settings, network);
+			Blockcore.Utilities.JsonConverters.Serializer.RegisterFrontConverters(settings, network);
 
 			if(prettyPrint)
 			{
@@ -26,7 +26,7 @@ namespace NTumbleBit
 				var btcSerializable = settings.Converters.Where((o, i) =>
 				{
 					index = i;
-					return o is NBitcoin.JsonConverters.BitcoinSerializableJsonConverter;
+					return o is Blockcore.Utilities.JsonConverters.BitcoinSerializableJsonConverter;
 				}).First();
 
 				var btcSerializableOverride = new OverridesJsonConverter(btcSerializable);

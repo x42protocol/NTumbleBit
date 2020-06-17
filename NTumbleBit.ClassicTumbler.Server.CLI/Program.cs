@@ -1,23 +1,12 @@
 ﻿using System;
-using TCPServer;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
 using NBitcoin;
-using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Logging;
 using NTumbleBit.Services;
-using System.Threading;
 using NTumbleBit.Logging;
-using NTumbleBit.ClassicTumbler;
 using NTumbleBit.Configuration;
-using NTumbleBit.ClassicTumbler.Server;
 using NTumbleBit.ClassicTumbler.CLI;
-using System.Net;
-using NBitcoin.Altcoins;
 
 namespace NTumbleBit.ClassicTumbler.Server.CLI
 {
@@ -29,7 +18,7 @@ namespace NTumbleBit.ClassicTumbler.Server.CLI
 		}
 		public void Run(string[] args)
 		{
-			INetworkSet networkSet = AltNetworkSets.Bitcoin;
+			NetworksSelector networkSet = x42.Networks.Networks.x42;
 			var argsConf = new TextFileConfiguration(args);
 			var debug = argsConf.GetOrDefault<bool>("debug", false);
 

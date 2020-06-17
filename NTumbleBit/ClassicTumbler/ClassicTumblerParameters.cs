@@ -1,15 +1,10 @@
 ﻿using NBitcoin;
 using NBitcoin.Crypto;
-using NBitcoin.DataEncoders;
 using NTumbleBit.PuzzlePromise;
 using NTumbleBit.PuzzleSolver;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TumbleBitSetup;
-using NTumbleBit.Services;
 using NTumbleBit.ClassicTumbler.Client;
 
 namespace NTumbleBit.ClassicTumbler
@@ -119,7 +114,7 @@ namespace NTumbleBit.ClassicTumbler
 		internal string PrettyPrint()
 		{
 			//Strip keys so we can read
-			var parameters = this.Clone();
+			var parameters = this.Clone(Network.Consensus.ConsensusFactory);
 			parameters.ServerKey = null;
 			parameters.VoucherKey = null;
 			return Serializer.ToString(parameters, parameters.Network, true);
@@ -396,14 +391,14 @@ namespace NTumbleBit.ClassicTumbler
 		{
 			KeySize = RsaKey.KeySize,
 			SecurityParameter = 128,
-			PublicString = new uint256("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f").ToBytes(lendian: true)
+			PublicString = new uint256("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f").ToBytes(littleEndian: true)
 		};
 
 		public static readonly PermutationTestSetup PermutationSetup = new PermutationTestSetup()
 		{
 			KeySize = RsaKey.KeySize,
 			SecurityParameter = 128,
-			PublicString = new uint256("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f").ToBytes(lendian: true),
+			PublicString = new uint256("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f").ToBytes(littleEndian: true),
 			Alpha = 65537
 		};
 

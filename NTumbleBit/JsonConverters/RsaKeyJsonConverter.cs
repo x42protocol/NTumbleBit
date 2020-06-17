@@ -1,8 +1,6 @@
-﻿using NBitcoin;
+﻿using Blockcore.Utilities.JsonConverters;
 using NBitcoin.DataEncoders;
-using NBitcoin.JsonConverters;
 using Newtonsoft.Json;
-using NTumbleBit.JsonConverters;
 using System;
 using System.IO;
 using System.Reflection;

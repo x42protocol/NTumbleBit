@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Text;
-using System.Web.NBitcoin;
+using System.Web;
 
 namespace NTumbleBit.ClassicTumbler
 {

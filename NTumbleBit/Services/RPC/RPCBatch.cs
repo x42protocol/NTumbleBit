@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using System.Linq;
-using NBitcoin;
-using NBitcoin.RPC;
+using Blockcore.Features.RPC;
 
 namespace NTumbleBit.Services.RPC
 {

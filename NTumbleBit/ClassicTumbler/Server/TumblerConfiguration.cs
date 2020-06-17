@@ -81,7 +81,7 @@ namespace NTumbleBit.ClassicTumbler.Server
 			set;
 		}
 
-		public TumblerConfiguration LoadArgs(INetworkSet networkSet, String[] args)
+		public TumblerConfiguration LoadArgs(NetworksSelector networkSet, String[] args)
 		{
 			ConfigurationFile = args.Where(a => a.StartsWith("-conf=", StringComparison.Ordinal)).Select(a => a.Substring("-conf=".Length).Replace("\"", "")).FirstOrDefault();
 			DataDir = args.Where(a => a.StartsWith("-datadir=", StringComparison.Ordinal)).Select(a => a.Substring("-datadir=".Length).Replace("\"", "")).FirstOrDefault();
@@ -94,17 +94,17 @@ namespace NTumbleBit.ClassicTumbler.Server
 				}
 			}
 
-			Network = args.Contains("-testnet", StringComparer.OrdinalIgnoreCase) ? networkSet.Testnet :
-				args.Contains("-regtest", StringComparer.OrdinalIgnoreCase) ? networkSet.Regtest :
-				networkSet.Mainnet;
+			Network = args.Contains("-testnet", StringComparer.OrdinalIgnoreCase) ? networkSet.Testnet() :
+				args.Contains("-regtest", StringComparer.OrdinalIgnoreCase) ? networkSet.Regtest() :
+				networkSet.Mainnet();
 
 			if(ConfigurationFile != null)
 			{
 				AssetConfigFileExists();
 				var configTemp = TextFileConfiguration.Parse(File.ReadAllText(ConfigurationFile));
-				Network = configTemp.GetOrDefault<bool>("testnet", false) ? networkSet.Testnet :
-						  configTemp.GetOrDefault<bool>("regtest", false) ? networkSet.Regtest :
-						  networkSet.Mainnet;
+				Network = configTemp.GetOrDefault<bool>("testnet", false) ? networkSet.Testnet() :
+						  configTemp.GetOrDefault<bool>("regtest", false) ? networkSet.Regtest() :
+						  networkSet.Mainnet();
 			}
 			if(DataDir == null)
 			{
@@ -197,7 +197,7 @@ namespace NTumbleBit.ClassicTumbler.Server
 				StringBuilder builder = new StringBuilder();
 				builder.AppendLine("####Common Commands####");
 				builder.AppendLine("#Connection to the input wallet. TumbleBit.CLI will try to autoconfig based on default settings of Bitcoin Core.");
-				builder.AppendLine("#rpc.url=http://localhost:" + Network.RPCPort + "/");
+				builder.AppendLine("#rpc.url=http://localhost:" + Network.DefaultRPCPort + "/");
 				builder.AppendLine("#rpc.user=bitcoinuser");
 				builder.AppendLine("#rpc.password=bitcoinpassword");
 				builder.AppendLine("#rpc.cookiefile=yourbitcoinfolder/.cookie");

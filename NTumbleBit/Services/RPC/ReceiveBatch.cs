@@ -1,12 +1,10 @@
 ﻿using NBitcoin;
 using System.Linq;
-using NBitcoin.RPC;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
+using Blockcore.Features.RPC;
 
 namespace NTumbleBit.Services.RPC
 {
@@ -139,13 +137,14 @@ namespace NTumbleBit.Services.RPC
 
 			//should be zero, but for later improvement...
 			var currentFee = tx.GetFee(data.Select(d => d.EscrowedCoin).ToArray());
-			tx.Outputs[0].Value -= FeeRate.GetFee(tx) - currentFee;
+			var virtualSize = tx.HasWitness ? tx.GetVirtualSize(_RPCClient.Network.Consensus.Options.WitnessScaleFactor) : tx.GetSerializedSize();
+			tx.Outputs[0].Value -= FeeRate.GetFee(virtualSize) - currentFee;
 
 			for(int i = 0; i < data.Length; i++)
 			{
 				var input = data[i];
 				var txin = tx.Inputs[i];
-				var signature = tx.SignInput(input.EscrowKey, input.EscrowedCoin);
+				var signature = tx.SignInput(_RPCClient.Network, input.EscrowKey, input.EscrowedCoin);
 				txin.ScriptSig = new Script(
 				Op.GetPushOp(input.ClientSignature.ToBytes()),
 				Op.GetPushOp(signature.ToBytes()),

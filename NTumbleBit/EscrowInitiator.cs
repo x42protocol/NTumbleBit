@@ -9,111 +9,112 @@ using NBitcoin.BuilderExtensions;
 
 namespace NTumbleBit
 {
-	public interface IEscrow
-	{
-		ScriptCoin EscrowedCoin
-		{
-			get;
-		}
-	}
-	public abstract class EscrowInitiator : IEscrow
-	{
-		public class State
-		{
-			public ScriptCoin EscrowedCoin
-			{
-				get;
-				set;
-			}
-			public Key EscrowKey
-			{
-				get;
-				set;
-			}
-			public Script RedeemDestination
-			{
-				get;
-				set;
-			}
+    public interface IEscrow
+    {
+        ScriptCoin EscrowedCoin
+        {
+            get;
+        }
+    }
+    public abstract class EscrowInitiator : IEscrow
+    {
+        public class State
+        {
+            public ScriptCoin EscrowedCoin
+            {
+                get;
+                set;
+            }
+            public Key EscrowKey
+            {
+                get;
+                set;
+            }
+            public Script RedeemDestination
+            {
+                get;
+                set;
+            }
 
-			/// <summary>
-			/// Identify the channel to the tumbler
-			/// </summary>
-			public uint160 ChannelId
-			{
-				get;
-				set;
-			}
-		}
+            /// <summary>
+            /// Identify the channel to the tumbler
+            /// </summary>
+            public uint160 ChannelId
+            {
+                get;
+                set;
+            }
+        }
 
-		protected State InternalState
-		{
-			get; set;
-		}
+        protected State InternalState
+        {
+            get; set;
+        }
 
-		public virtual void ConfigureEscrowedCoin(uint160 channelId, ScriptCoin escrowedCoin, Key escrowKey, Script redeemDestination)
-		{
-			if(escrowedCoin == null)
-				throw new ArgumentNullException(nameof(escrowedCoin));
-			if(escrowKey == null)
-				throw new ArgumentNullException(nameof(escrowKey));
+        public virtual void ConfigureEscrowedCoin(uint160 channelId, ScriptCoin escrowedCoin, Key escrowKey, Script redeemDestination)
+        {
+            if (escrowedCoin == null)
+                throw new ArgumentNullException(nameof(escrowedCoin));
+            if (escrowKey == null)
+                throw new ArgumentNullException(nameof(escrowKey));
             var escrow = EscrowScriptPubKeyParameters.GetFromCoin(escrowedCoin);
-			if(escrow == null ||
-				escrow.Initiator != escrowKey.PubKey)
-				throw new PuzzleException("Invalid escrow");
+            if (escrow == null ||
+                escrow.Initiator != escrowKey.PubKey)
+                throw new PuzzleException("Invalid escrow");
             InternalState.ChannelId = channelId ?? throw new ArgumentNullException(nameof(channelId));
-			InternalState.EscrowedCoin = escrowedCoin;
-			InternalState.EscrowKey = escrowKey;
-			InternalState.RedeemDestination = redeemDestination ?? throw new ArgumentNullException(nameof(redeemDestination));
-		}
+            InternalState.EscrowedCoin = escrowedCoin;
+            InternalState.EscrowKey = escrowKey;
+            InternalState.RedeemDestination = redeemDestination ?? throw new ArgumentNullException(nameof(redeemDestination));
+        }
 
-		public TrustedBroadcastRequest CreateRedeemTransaction(FeeRate feeRate)
-		{
-			if(feeRate == null)
-				throw new ArgumentNullException(nameof(feeRate));
+        public TrustedBroadcastRequest CreateRedeemTransaction(Network network, FeeRate feeRate)
+        {
+            if (feeRate == null)
+                throw new ArgumentNullException(nameof(feeRate));
 
-			var escrow = EscrowScriptPubKeyParameters.GetFromCoin(InternalState.EscrowedCoin);
-			var escrowCoin = InternalState.EscrowedCoin;
-			Transaction tx = new Transaction();
-			tx.LockTime = escrow.LockTime;
-			tx.Inputs.Add(new TxIn());
-			//Put a dummy signature and the redeem script
-			tx.Inputs[0].ScriptSig =
-				new Script(
-					Op.GetPushOp(TrustedBroadcastRequest.PlaceholderSignature),
-					Op.GetPushOp(escrowCoin.Redeem.ToBytes()));
-			tx.Inputs[0].Witnessify();
-			tx.Inputs[0].Sequence = 0;
+            var escrow = EscrowScriptPubKeyParameters.GetFromCoin(InternalState.EscrowedCoin);
+            var escrowCoin = InternalState.EscrowedCoin;
+            Transaction tx = new Transaction();
+            tx.LockTime = escrow.LockTime;
+            tx.Inputs.Add(new TxIn());
+            //Put a dummy signature and the redeem script
+            tx.Inputs[0].ScriptSig =
+                new Script(
+                    Op.GetPushOp(TrustedBroadcastRequest.PlaceholderSignature),
+                    Op.GetPushOp(escrowCoin.Redeem.ToBytes()));
+            tx.Inputs[0].Witnessify();
+            tx.Inputs[0].Sequence = 0;
 
-			tx.Outputs.Add(new TxOut(escrowCoin.Amount, InternalState.RedeemDestination));
-			tx.Outputs[0].Value -= feeRate.GetFee(tx.GetVirtualSize());
+            tx.Outputs.Add(new TxOut(escrowCoin.Amount, InternalState.RedeemDestination));
+            var virtualSize = tx.HasWitness ? tx.GetVirtualSize(network.Consensus.Options.WitnessScaleFactor) : tx.GetSerializedSize();
+            tx.Outputs[0].Value -= feeRate.GetFee(tx.GetVirtualSize(virtualSize));
 
-			var redeemTransaction = new TrustedBroadcastRequest
-			{
-				Key = InternalState.EscrowKey,
-				PreviousScriptPubKey = escrowCoin.ScriptPubKey,
-				Transaction = tx,
-				KnownPrevious = new Coin[] { escrowCoin }
-			};
-			return redeemTransaction;
-		}
+            var redeemTransaction = new TrustedBroadcastRequest
+            {
+                Key = InternalState.EscrowKey,
+                PreviousScriptPubKey = escrowCoin.ScriptPubKey,
+                Transaction = tx,
+                KnownPrevious = new Coin[] { escrowCoin }
+            };
+            return redeemTransaction;
+        }
 
-		public abstract LockTime GetLockTime(CycleParameters cycle);
+        public abstract LockTime GetLockTime(CycleParameters cycle);
 
-		public uint160 Id
-		{
-			get
-			{
-				return InternalState.ChannelId;
-			}
-		}
+        public uint160 Id
+        {
+            get
+            {
+                return InternalState.ChannelId;
+            }
+        }
 
-		public ScriptCoin EscrowedCoin
-		{
-			get
-			{
-				return InternalState.EscrowedCoin;
-			}
-		}
-	}
+        public ScriptCoin EscrowedCoin
+        {
+            get
+            {
+                return InternalState.EscrowedCoin;
+            }
+        }
+    }
 }

@@ -1,28 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using NBitcoin;
-using NBitcoin.RPC;
-using System.Threading;
 
 namespace NTumbleBit.Services.RPC
 {
 	public class RPCFeeService : IFeeService
 	{
-		public RPCFeeService(RPCClient rpc)
+		Network network;
+
+		public RPCFeeService(Network network)
 		{
-            _RPCClient = rpc ?? throw new ArgumentNullException(nameof(rpc));
+			this.network = network;
 		}
 
-		private readonly RPCClient _RPCClient;
-		public RPCClient RPCClient
-		{
-			get
-			{
-				return _RPCClient;
-			}
-		}
 		public FeeRate FallBackFeeRate
 		{
 			get; set;
@@ -35,11 +24,11 @@ namespace NTumbleBit.Services.RPC
 		FeeRate _CachedValue;
 		DateTimeOffset _CachedValueTime;
 		TimeSpan CacheExpiration = TimeSpan.FromSeconds(60 * 5);
-		public async Task<FeeRate> GetFeeRateAsync()
+		public FeeRate GetFeeRate()
 		{
 			if(DateTimeOffset.UtcNow - _CachedValueTime > CacheExpiration)
 			{
-				var rate = await FetchRateAsync();
+				var rate = FetchRate();
 				_CachedValue = rate;
 				_CachedValueTime = DateTimeOffset.UtcNow;
 				return rate;
@@ -50,9 +39,9 @@ namespace NTumbleBit.Services.RPC
 			}
 		}
 
-		private async Task<FeeRate> FetchRateAsync()
+		private FeeRate FetchRate()
 		{
-			var rate = (await _RPCClient.TryEstimateSmartFeeAsync(1).ConfigureAwait(false))?.FeeRate ?? FallBackFeeRate;
+			var rate = new FeeRate(network.MinTxFee);
 			if(rate == null)
 				throw new FeeRateUnavailableException("The fee rate is unavailable");
 			if(rate < MinimumFeeRate)

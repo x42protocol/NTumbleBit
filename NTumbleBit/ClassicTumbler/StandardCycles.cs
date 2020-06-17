@@ -24,7 +24,7 @@ namespace NTumbleBit.ClassicTumbler
 		{
 			get; set;
 		}
-		public Consensus Consensus
+		public IConsensus Consensus
 		{
 			get; set;
 		}
@@ -64,7 +64,7 @@ namespace NTumbleBit.ClassicTumbler
 			return network.NetworkType == NetworkType.Testnet || network.NetworkType == NetworkType.Regtest;
 		}
 
-		public StandardCycles(Consensus consensus, bool debug)
+		public StandardCycles(IConsensus consensus, bool debug)
 		{
 			_Debug = debug;
 
@@ -190,13 +190,13 @@ namespace NTumbleBit.ClassicTumbler
 			}
 		}
 
-		internal static int GetBlocksCount(Consensus consensus, int minutes)
+		internal static int GetBlocksCount(IConsensus consensus, int minutes)
 		{
-			return (int)Math.Ceiling((double)TimeSpan.FromMinutes(minutes).Ticks / consensus.PowTargetSpacing.Ticks);
+			return (int)Math.Ceiling((double)TimeSpan.FromMinutes(minutes).Ticks / consensus.TargetSpacing.Ticks);
 		}
-		internal static TimeSpan GetEstimatedTime(Consensus consensus, int blocks)
+		internal static TimeSpan GetEstimatedTime(IConsensus consensus, int blocks)
 		{
-			return TimeSpan.FromTicks(consensus.PowTargetSpacing.Ticks * blocks);
+			return TimeSpan.FromTicks(consensus.TargetSpacing.Ticks * blocks);
 		}
 
 		StandardCycle _Kotori;

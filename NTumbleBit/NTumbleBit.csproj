@@ -12,10 +12,16 @@
 		<GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
 	</PropertyGroup>
 	<ItemGroup>
+		<PackageReference Include="Blockcore.Core" Version="1.0.10" />
+		<PackageReference Include="Blockcore.Features.RPC" Version="1.0.10" />
+		<PackageReference Include="Blockcore.NBitcoin" Version="1.0.10" />
 		<PackageReference Include="CommandLineParser" Version="2.2.1" />
-		<PackageReference Include="DBreeze" Version="1.93.0" />
-		<PackageReference Include="NBitcoin" Version="4.1.1.93" />
-		<PackageReference Include="TCPServer" Version="1.0.14.1" />
+		<PackageReference Include="DBreeze" Version="1.95.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.1.5" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="3.1.5" />
+	</ItemGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\TCPServer\TCPServer.csproj" />
 	</ItemGroup>
 	<ItemGroup>
 		<Compile Update="Properties\Resources.Designer.cs">

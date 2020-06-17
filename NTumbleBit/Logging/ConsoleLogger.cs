@@ -1,7 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions.Internal;
 using Microsoft.Extensions.Logging.Console;
-using Microsoft.Extensions.Logging.Console.Internal;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -65,7 +63,7 @@ namespace NTumbleBit.Logging
 
         public CustomerConsoleLogger(string name, Func<string, LogLevel, bool> filter, IExternalScopeProvider scopeProvider, ConsoleLoggerProcessor loggerProcessor)
         {
-            if(name == null)
+            if (name == null)
             {
                 throw new ArgumentNullException(nameof(name));
             }
@@ -74,32 +72,6 @@ namespace NTumbleBit.Logging
             Filter = filter ?? ((category, logLevel) => true);
             ScopeProvider = scopeProvider;
             _queueProcessor = loggerProcessor;
-
-            if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Console = new WindowsLogConsole();
-            }
-            else
-            {
-                Console = new AnsiLogConsole(new AnsiSystemConsole());
-            }
-        }
-
-        public IConsole Console
-        {
-            get
-            {
-                return _queueProcessor.Console;
-            }
-            set
-            {
-                if(value == null)
-                {
-                    throw new ArgumentNullException(nameof(value));
-                }
-
-                _queueProcessor.Console = value;
-            }
         }
 
         public Func<string, LogLevel, bool> Filter
@@ -110,7 +82,7 @@ namespace NTumbleBit.Logging
             }
             set
             {
-                if(value == null)
+                if (value == null)
                 {
                     throw new ArgumentNullException(nameof(value));
                 }
@@ -136,19 +108,19 @@ namespace NTumbleBit.Logging
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
-            if(!IsEnabled(logLevel))
+            if (!IsEnabled(logLevel))
             {
                 return;
             }
 
-            if(formatter == null)
+            if (formatter == null)
             {
                 throw new ArgumentNullException(nameof(formatter));
             }
 
             var message = formatter(state, exception);
 
-            if(!string.IsNullOrEmpty(message) || exception != null)
+            if (!string.IsNullOrEmpty(message) || exception != null)
             {
                 WriteMessage(logLevel, Name, eventId.Id, message, exception);
             }
@@ -159,7 +131,7 @@ namespace NTumbleBit.Logging
             var logBuilder = _logBuilder;
             _logBuilder = null;
 
-            if(logBuilder == null)
+            if (logBuilder == null)
             {
                 logBuilder = new StringBuilder();
             }
@@ -179,12 +151,12 @@ namespace NTumbleBit.Logging
             logBuilder.Append(logName);
             logBuilder.Append(": ");
             var lenAfter = logBuilder.ToString().Length;
-            while(lenAfter++ < 18)
+            while (lenAfter++ < 18)
                 logBuilder.Append(" ");
             // scope information
             GetScopeInformation(logBuilder);
 
-            if(!string.IsNullOrEmpty(message))
+            if (!string.IsNullOrEmpty(message))
             {
                 // message
                 //logBuilder.Append(_messagePadding);
@@ -197,13 +169,13 @@ namespace NTumbleBit.Logging
             // Example:
             // System.InvalidOperationException
             //    at Namespace.Class.Function() in File:line X
-            if(exception != null)
+            if (exception != null)
             {
                 // exception message
                 logBuilder.AppendLine(exception.ToString());
             }
 
-            if(logBuilder.Length > 0)
+            if (logBuilder.Length > 0)
             {
                 var hasLevel = !string.IsNullOrEmpty(logLevelString);
                 // Queue log message
@@ -218,7 +190,7 @@ namespace NTumbleBit.Logging
             }
 
             logBuilder.Clear();
-            if(logBuilder.Capacity > 1024)
+            if (logBuilder.Capacity > 1024)
             {
                 logBuilder.Capacity = 1024;
             }
@@ -227,7 +199,7 @@ namespace NTumbleBit.Logging
 
         public bool IsEnabled(LogLevel logLevel)
         {
-            if(logLevel == LogLevel.None)
+            if (logLevel == LogLevel.None)
             {
                 return false;
             }
@@ -235,11 +207,11 @@ namespace NTumbleBit.Logging
             return Filter(Name, logLevel);
         }
 
-        public IDisposable BeginScope<TState>(TState state) => ScopeProvider?.Push(state) ?? NullScope.Instance;
+        public IDisposable BeginScope<TState>(TState state) => ScopeProvider?.Push(state);
 
         private static string GetLogLevelString(LogLevel logLevel)
         {
-            switch(logLevel)
+            switch (logLevel)
             {
                 case LogLevel.Trace:
                     return "trce";
@@ -260,14 +232,14 @@ namespace NTumbleBit.Logging
 
         private ConsoleColors GetLogLevelConsoleColors(LogLevel logLevel)
         {
-            if(DisableColors)
+            if (DisableColors)
             {
                 return new ConsoleColors(null, null);
             }
 
             // We must explicitly set the background color if we are setting the foreground color,
             // since just setting one can look bad on the users console.
-            switch(logLevel)
+            switch (logLevel)
             {
                 case LogLevel.Critical:
                     return new ConsoleColors(ConsoleColor.White, ConsoleColor.Red);
@@ -289,7 +261,7 @@ namespace NTumbleBit.Logging
         private void GetScopeInformation(StringBuilder stringBuilder)
         {
             var scopeProvider = ScopeProvider;
-            if(scopeProvider != null)
+            if (scopeProvider != null)
             {
                 var initialLength = stringBuilder.Length;
 
@@ -300,7 +272,7 @@ namespace NTumbleBit.Logging
                     builder.Append(first ? "=> " : " => ").Append(scope);
                 }, (stringBuilder, initialLength));
 
-                if(stringBuilder.Length > initialLength)
+                if (stringBuilder.Length > initialLength)
                 {
                     stringBuilder.Insert(initialLength, _messagePadding);
                     stringBuilder.AppendLine();
@@ -327,7 +299,7 @@ namespace NTumbleBit.Logging
             }
         }
 
-        private class AnsiSystemConsole : IAnsiSystemConsole
+        private class AnsiSystemConsole
         {
             public void Write(string message)
             {
@@ -348,8 +320,6 @@ namespace NTumbleBit.Logging
         private readonly BlockingCollection<LogMessageEntry> _messageQueue = new BlockingCollection<LogMessageEntry>(_maxQueuedMessages);
         private readonly Task _outputTask;
 
-        public IConsole Console;
-
         public ConsoleLoggerProcessor()
         {
             // Start Console message queue processor
@@ -361,14 +331,14 @@ namespace NTumbleBit.Logging
 
         public virtual void EnqueueMessage(LogMessageEntry message)
         {
-            if(!_messageQueue.IsAddingCompleted)
+            if (!_messageQueue.IsAddingCompleted)
             {
                 try
                 {
                     _messageQueue.Add(message);
                     return;
                 }
-                catch(InvalidOperationException) { }
+                catch (InvalidOperationException) { }
             }
 
             // Adding is completed so just log the message
@@ -378,18 +348,17 @@ namespace NTumbleBit.Logging
         // for testing
         internal virtual void WriteMessage(LogMessageEntry message)
         {
-            if(message.LevelString != null)
+            if (message.LevelString != null)
             {
                 Console.Write(message.LevelString, message.LevelBackground, message.LevelForeground);
             }
 
             Console.Write(message.Message, message.MessageColor, message.MessageColor);
-            Console.Flush();
         }
 
         private void ProcessLogQueue()
         {
-            foreach(var message in _messageQueue.GetConsumingEnumerable())
+            foreach (var message in _messageQueue.GetConsumingEnumerable())
             {
                 WriteMessage(message);
             }
@@ -410,8 +379,8 @@ namespace NTumbleBit.Logging
             {
                 _outputTask.Wait(1500); // with timeout in-case Console is locked by user input
             }
-            catch(TaskCanceledException) { }
-            catch(AggregateException ex) when(ex.InnerExceptions.Count == 1 && ex.InnerExceptions[0] is TaskCanceledException) { }
+            catch (TaskCanceledException) { }
+            catch (AggregateException ex) when (ex.InnerExceptions.Count == 1 && ex.InnerExceptions[0] is TaskCanceledException) { }
         }
     }
 

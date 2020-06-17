@@ -17,51 +17,53 @@ using NTumbleBit.Logging;
 using System.Net;
 using System.Text;
 using System.IO;
+using Newtonsoft.Json;
 
 namespace NTumbleBit.ClassicTumbler.Server
 {
-	public class Startup
-	{
-		// This method gets called by the runtime. Use this method to add services to the container.
-		// For more information on how to configure your application, visit http://go.microsoft.com/fwlink/?LinkID=398940
-		public void ConfigureServices(IServiceCollection services)
-		{
-			services.AddSingleton<IObjectModelValidator, NoObjectModelValidator>();
-			services.AddMvcCore(o =>
-			{
-				o.Filters.Add(new ActionResultExceptionFilter());
-				o.Filters.Add(new TumblerExceptionFilter());
-				o.InputFormatters.Add(new BitcoinInputFormatter());
-				o.OutputFormatters.Add(new BitcoinOutputFormatter());
-			});
+    public class Startup
+    {
+        // This method gets called by the runtime. Use this method to add services to the container.
+        // For more information on how to configure your application, visit http://go.microsoft.com/fwlink/?LinkID=398940
+        public void ConfigureServices(IServiceCollection services)
+        {
+            services.AddSingleton<IObjectModelValidator, NoObjectModelValidator>();
+            services.AddMvcCore(o =>
+            {
+                o.Filters.Add(new ActionResultExceptionFilter());
+                o.Filters.Add(new TumblerExceptionFilter());
+                o.InputFormatters.Add(new BitcoinInputFormatter());
+                o.OutputFormatters.Add(new BitcoinOutputFormatter());
+                o.EnableEndpointRouting = false;
+            });
 
-			services.AddLogging(o =>
-			{
-				o.AddFilter("Microsoft.AspNetCore.Hosting.Internal.WebHost", LogLevel.Error);
-				o.AddFilter("Microsoft.AspNetCore.Mvc", LogLevel.Error);
-				o.AddFilter("Microsoft.AspNetCore.Server.Kestrel", LogLevel.Error);
-				o.AddFilter("TCPServer", LogLevel.Error);
-				o.AddConsole();
-			});
-		}
+            services.AddLogging(o =>
+            {
+                o.AddFilter("Microsoft.AspNetCore.Hosting.Internal.WebHost", LogLevel.Error);
+                o.AddFilter("Microsoft.AspNetCore.Mvc", LogLevel.Error);
+                o.AddFilter("Microsoft.AspNetCore.Server.Kestrel", LogLevel.Error);
+                o.AddFilter("TCPServer", LogLevel.Error);
+                o.AddConsole();
+            });
+        }
 
-		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-		public void Configure(IApplicationBuilder app, IHostingEnvironment env,
-			ILoggerFactory loggerFactory,
-			IServiceProvider serviceProvider)
-		 {
-			app.Use(req =>
-			{
-				return async (ctx) =>
-				{
-					DateTimeOffset before = DateTimeOffset.UtcNow;
-					try
-					{
-						await req(ctx);
-					}
-					catch(Exception ex)
-					{
-						Logs.Tumbler.LogCritical(new EventId(), ex, "Unhandled exception thrown by the Tumbler Service");
+        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env,
+            ILoggerFactory loggerFactory,
+            IServiceProvider serviceProvider)
+        {
+            app.Use(req =>
+            {
+                return async (ctx) =>
+                {
+                    DateTimeOffset before = DateTimeOffset.UtcNow;
+                    try
+                    {
+                        await req(ctx);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logs.Tumbler.LogCritical(new EventId(), ex, "Unhandled exception thrown by the Tumbler Service");
                         if (ex is WebException webEx)
                         {
                             try
@@ -73,51 +75,51 @@ namespace NTumbleBit.ClassicTumbler.Server
                             catch { }
                         }
                         throw;
-					}
-					finally
-					{
-						var timeSpent = DateTimeOffset.UtcNow - before;
-						var timeSpentStr = $"{timeSpent.TotalSeconds.ToString("0.00")} seconds spent on {ctx.Request.Path}";
-						if(timeSpent > TimeSpan.FromMinutes(1.0))
-						{
-							Logs.Tumbler.LogCritical("Overload detected: " + timeSpentStr);
-						}
-						else
-						{
-							Logs.Tumbler.LogDebug(timeSpentStr);
-						}
-					}
-				};
-			});
+                    }
+                    finally
+                    {
+                        var timeSpent = DateTimeOffset.UtcNow - before;
+                        var timeSpentStr = $"{timeSpent.TotalSeconds.ToString("0.00")} seconds spent on {ctx.Request.Path}";
+                        if (timeSpent > TimeSpan.FromMinutes(1.0))
+                        {
+                            Logs.Tumbler.LogCritical("Overload detected: " + timeSpentStr);
+                        }
+                        else
+                        {
+                            Logs.Tumbler.LogDebug(timeSpentStr);
+                        }
+                    }
+                };
+            });
 
-			app.UseMvc();
+            app.UseMvc();
 
 
-			var builder = serviceProvider.GetService<ConfigurationBuilder>() ?? new ConfigurationBuilder();
-			Configuration = builder.Build();
+            var builder = serviceProvider.GetService<ConfigurationBuilder>() ?? new ConfigurationBuilder();
+            Configuration = builder.Build();
 
-			var config = serviceProvider.GetService<TumblerRuntime>();
-			var options = GetMVCOptions(serviceProvider);
-			Serializer.RegisterFrontConverters(options.SerializerSettings, config.Network);
-		}
-		
+            var config = serviceProvider.GetService<TumblerRuntime>();
+            var options = GetMVCOptions(serviceProvider);
+            Serializer.RegisterFrontConverters(options, config.Network);
+        }
 
-		public IConfiguration Configuration
-		{
-			get; set;
-		}
 
-		private static MvcJsonOptions GetMVCOptions(IServiceProvider serviceProvider)
-		{
-			return serviceProvider.GetRequiredService<IOptions<MvcJsonOptions>>().Value;
-		}
-	}
+        public IConfiguration Configuration
+        {
+            get; set;
+        }
 
-	internal class NoObjectModelValidator : IObjectModelValidator
-	{
-		public void Validate(ActionContext actionContext, ValidationStateDictionary validationState, string prefix, object model)
-		{
+        private static JsonSerializerSettings GetMVCOptions(IServiceProvider serviceProvider)
+        {
+            return serviceProvider.GetRequiredService<IOptions<JsonSerializerSettings>>().Value;
+        }
+    }
 
-		}
-	}
+    internal class NoObjectModelValidator : IObjectModelValidator
+    {
+        public void Validate(ActionContext actionContext, ValidationStateDictionary validationState, string prefix, object model)
+        {
+
+        }
+    }
 }

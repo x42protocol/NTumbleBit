@@ -3,7 +3,6 @@ using NBitcoin;
 using System.Reflection;
 using System;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc.Internal;
 using NTumbleBit.ClassicTumbler.Server;
 
 namespace NTumbleBit.ClassicTumbler
