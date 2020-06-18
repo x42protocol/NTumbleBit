@@ -40,8 +40,9 @@ namespace NTumbleBit.ClassicTumbler.Client
             {
                 await runtime.ConfigureAsync(configuration, interaction).ConfigureAwait(false);
             }
-            catch
+            catch (Exception ex)
             {
+                var message = ex.Message;
                 runtime.Dispose();
                 throw;
             }

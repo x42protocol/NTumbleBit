@@ -24,7 +24,7 @@ namespace NTumbleBit
 			handler.CheckCertificateRevocationList = false;
 			handler.ClientCertificateOptions = ClientCertificateOption.Manual;
 			handler.ClientCertificates.Clear();
-			handler.CookieContainer = null;
+			handler.CookieContainer = new CookieContainer();
 			handler.Credentials = null;
 			handler.PreAuthenticate = false;
 			return handler;
